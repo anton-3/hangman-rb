@@ -11,8 +11,9 @@ class Player
   def make_guess
     guess = nil
     loop do
-      print 'Enter your guess: '
+      print 'Guess a letter or type "save" to save the game: '
       guess = gets.chomp.downcase
+      return 'save' if guess == 'save'
       break if ALPHABET.include?(guess) && !@game.all_guesses.include?(guess)
 
       puts 'Invalid input!'

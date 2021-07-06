@@ -2,21 +2,26 @@
 
 # game logic
 class Game
+  extend Saveable
+
   attr_reader :guesses
+
+  WORDS = File.foreach('dictionary.txt').map { |line| line.chomp.downcase }.freeze
+  MIN_LENGTH = 5
+  MAX_LENGTH = 12
 
   def initialize(max_incorrect_guesses = 11)
     @max_incorrect_guesses = max_incorrect_guesses
     @player = Player.new(self)
-    @computer = Computer.new
     @wrong_guess_count = 0
     @guesses = { correct: [], incorrect: [] }
+    @word = select_word
   end
 
   def play
-    puts "\nYou have #{@max_incorrect_guesses} attempts to guess the computer's word."
-    print 'Press ENTER to play:'
-    gets
-    @word = @computer.select_word
+    puts "\nTry to guess the computer's word!"
+    puts "You lose if you guess incorrectly #{@max_incorrect_guesses} times."
+    sleep 1
     display_turn
     game_loop
   end
@@ -31,6 +36,8 @@ class Game
     while @guesses[:incorrect].length < @max_incorrect_guesses
       guess = @player.make_guess
       handle_guess(guess)
+      return if guess == 'save'
+
       display_turn
       if check_win?
         puts 'You win!'
@@ -54,11 +61,19 @@ class Game
     puts turn_msg
   end
 
+  def select_word
+    WORDS.select { |word| MIN_LENGTH <= word.length && MAX_LENGTH >= word.length }.sample
+  end
+
   def handle_guess(guess)
-    correctness = letters.include?(guess) ? :correct : :incorrect
-    puts "#{correctness.to_s.capitalize}!"
-    sleep 0.5
-    @guesses[correctness] << guess
+    if guess == 'save'
+      Game.save(self)
+    else
+      correctness = letters.include?(guess) ? :correct : :incorrect
+      puts "#{correctness.to_s.capitalize}!"
+      sleep 0.5
+      @guesses[correctness] << guess
+    end
   end
 
   def check_win?
